@@ -1,5 +1,6 @@
 package com.josemarcellio.jdiscord.gui;
 
+import com.josemarcellio.jdiscord.listener.ReadyListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 
@@ -59,10 +60,9 @@ public class JDiscordLoginGUI extends JFrame
 
         try {
             JDA jda = JDABuilder.createDefault(
-                    token).build();
-
-            System.out.println("[JDiscord] Logged in as "
-                    + jda.getSelfUser().getName());
+                    token)
+                    .addEventListeners(new ReadyListener())
+                    .build();
 
             JDiscordPanelGUI jDiscordPanelGUI =
                     new JDiscordPanelGUI(jda);
