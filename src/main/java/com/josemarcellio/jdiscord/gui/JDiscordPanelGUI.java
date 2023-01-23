@@ -152,113 +152,103 @@ public class JDiscordPanelGUI extends JFrame
     public void actionPerformed(
             ActionEvent e) {
 
-        if (e.getSource() == serverList) {
-            Object selectedServer = serverList.getSelectedItem();
-            if (selectedServer != null) {
-                updateChannelList(jda.getGuildsByName(
-                        (String) selectedServer,
-                        true).get(0).getIdLong());
-            }
-
+        if (e.getSource().equals(serverList)) {
+            handleServerSelection();
         } else if (e.getSource() instanceof JButton) {
-            String serverName = (String) serverList.getSelectedItem();
-            String channelName = (String) channelList.getSelectedItem();
-            String message = messageField.getText();
+            handleButtonClick();
+        }
+    }
 
-            if (serverName == null ||
-                    channelName == null) {
+    private void handleButtonClick() {
+
+        String serverName = (String) serverList
+                .getSelectedItem();
+
+        String channelName = (String) channelList
+                .getSelectedItem();
+
+        String message = messageField.getText();
+
+        if (serverName == null || channelName == null) {
+            return;
+        }
+
+        Guild guild = jda.getGuildsByName(
+                serverName, true)
+                .get(0);
+
+        TextChannel channel = guild.getTextChannelsByName(
+                channelName, true)
+                .get(0);
+
+        if (embedCheckBox.isSelected()) {
+            sendEmbedMessage(channel);
+        } else {
+            channel.sendMessage(message)
+                    .queue();
+
+            System.out.printf(
+                    "[JDiscord] %s -> %s%n",
+                    jda.getSelfUser().getName(), message);
+        }
+    }
+
+    private void handleServerSelection() {
+        Object selectedServer = serverList.getSelectedItem();
+        if (selectedServer != null) {
+            updateChannelList(jda.getGuildsByName(
+                    (String) selectedServer,
+                    true).get(0).getIdLong());
+        }
+    }
+
+    private void sendEmbedMessage(
+            TextChannel channel) {
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+
+        String title = embedTitleField.getText().trim();
+        String description = embedDescriptionField.getText().trim();
+        String color = embedColorField.getText().trim();
+
+        if (!title.isEmpty()) {
+            embedBuilder.setTitle(title);
+        }
+        if (!description.isEmpty()) {
+            embedBuilder.setDescription(description);
+        }
+        if (!color.isEmpty()) {
+            try {
+                int intColor = Integer.decode(color);
+                if (intColor >= 0 && intColor <= 16777215) {
+                    embedBuilder.setColor(intColor);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Please input color correctly!",
+                            "JDiscord Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Please input color correctly!",
+                        "JDiscord Error",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
-            Guild guild = jda.getGuildsByName(
-                            serverName,
-                            true)
-                    .get(0);
-
-            TextChannel channel = guild.getTextChannelsByName(
-                            channelName,
-                            true)
-                    .get(0);
-
-            if (embedCheckBox.isSelected()) {
-
-                EmbedBuilder embedBuilder =
-                        new EmbedBuilder();
-
-                String title = embedTitleField
-                        .getText().trim();
-
-                String description = embedDescriptionField
-                        .getText().trim();
-
-                String color = embedColorField
-                        .getText().trim();
-
-                if (!title.isEmpty()) {
-                    embedBuilder.setTitle(title);
-                }
-                if (!description.isEmpty()) {
-                    embedBuilder.setDescription(
-                            description);
-                }
-                if (!color.isEmpty()) {
-                    if (color.startsWith("#")) {
-                        try {
-                            embedBuilder.setColor(Color.decode(color));
-                        } catch (NumberFormatException ex) {
-                            JOptionPane.showMessageDialog(this,
-                                    "Please input the code format correctly!",
-                                    "JDiscord Error",
-                                    JOptionPane.ERROR_MESSAGE);
-
-                            return;
-                        }
-                    } else {
-                        try {
-                            int intColor = Integer.parseInt(color);
-                            if (intColor >= 0 && intColor <= 16777215) {
-                                embedBuilder.setColor(intColor);
-                            } else {
-                                JOptionPane.showMessageDialog(this,
-                                        "Please input the code format correctly!",
-                                        "JDiscord Error",
-                                        JOptionPane.ERROR_MESSAGE);
-
-                                return;
-                            }
-                        } catch (NumberFormatException ex) {
-                            JOptionPane.showMessageDialog(this,
-                                    "Please input the code format correctly!",
-                                    "JDiscord Error",
-                                    JOptionPane.ERROR_MESSAGE);
-
-                            return;
-                        }
-                    }
-                }
-                channel.sendMessageEmbeds(
-                        embedBuilder.build())
-                        .queue();
-
-                System.out.printf(
-                        "[JDiscord] %s -> Title: %s, Description: %s, Color: %s%n",
-                        jda.getSelfUser().getName(), title, description, color);
-
-            } else {
-                channel.sendMessage(message)
-                        .queue();
-                System.out.printf(
-                        "[JDiscord] %s -> %s%n",
-                        jda.getSelfUser().getName(), message);
-            }
         }
+        channel.sendMessageEmbeds(embedBuilder.build()).queue();
+
+        System.out.printf(
+                "[JDiscord] %s -> T: %s, D: %s, C: %s%n",
+                jda.getSelfUser().getName(), title, description, color);
     }
 
     @Override
     public void itemStateChanged(
             ItemEvent e) {
 
-        if (e.getSource() == embedCheckBox) {
+        if (e.getSource().equals(embedCheckBox)) {
 
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 messageField.setEnabled(false);
